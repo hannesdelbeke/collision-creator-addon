@@ -16,6 +16,24 @@ import bmesh
 from mathutils import Vector
 
 
+def copy_object(obj: bpy.types.Object = None, set_active=False) -> bpy.types.Object:
+    """
+    Copy an object and return the copy. 
+    obj: object to copy, defaults to the active object.
+    """
+    obj = obj or bpy.context.active_object
+    new_obj = obj.copy()
+    new_obj.data = obj.data.copy()
+    new_obj.animation_data_clear()
+    bpy.context.collection.objects.link(new_obj)
+    
+    # set active
+    if set_active:
+        bpy.context.view_layer.objects.active = new_obj
+
+    return new_obj
+
+
 def create_bounding_box(offset=0, apply_offset=False, parent_to_target=True):
     """Create a bounding box from the active object."""
     # Get the active object
@@ -73,7 +91,6 @@ def create_convex_hull(obj=None):
     
     new_bmesh = bmesh.new()
     new_bmesh.from_mesh(orig_mesh)
-    obj_copy = obj.copy()
 
     new_mesh = bpy.data.meshes.new(f"UCX_{orig_mesh.name}")
     conv_hull = bmesh.ops.convex_hull(new_bmesh, input=new_bmesh.verts)
@@ -83,15 +100,14 @@ def create_convex_hull(obj=None):
             context='VERTS',
             )
     new_bmesh.to_mesh(new_mesh)
-    obj_copy.name = f"UCX_{obj.name}"
-    obj_copy.data = new_mesh
+    obj.data = new_mesh
 
-    bpy.context.scene.collection.objects.link(obj_copy)
+    # bpy.context.scene.collection.objects.link(obj_copy)
     new_bmesh.free()  # not sure if this is needed
 
     # set obj_copy as active object
-    bpy.context.view_layer.objects.active = obj_copy
-    return obj_copy
+    # bpy.context.view_layer.objects.active = obj_copy
+    return obj
 
 
 def add_thickness(obj=None, offset=0, apply_offset=True, apply_modifier=True) -> bpy.types.Object:
@@ -160,6 +176,8 @@ def _create_convex_hull(offset=0, apply_offset=False, parent_to_target=True, tri
     bpy.ops.ed.undo_push(message="Create convex hull collision mesh")
 
     obj_original = bpy.context.active_object
+    new_obj = copy_object(obj_original, set_active=True)
+    new_obj.name = f"UCX_{obj_original.name}"
     create_convex_hull()
     add_thickness( offset=offset, apply_offset=apply_offset)
     limit_tris(tri_count=tri_count)  # tri count target is not reliable
