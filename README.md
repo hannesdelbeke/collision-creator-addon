@@ -1,4 +1,4 @@
-# collision-creator-addon
+# UCX Collision creator addon
 Quickly create basic UCX collision meshes in Blender.
 
 Select a mesh, tweak settings, and click the box or convex button.
