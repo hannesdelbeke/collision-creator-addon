@@ -12,7 +12,10 @@ bl_info = {
 
 
 import bpy
-from mathutils import Vector
+import bmesh
+from math import radians
+from mathutils import Vector, Matrix
+
 
 
 def create_bounding_box(offset=0, apply_offset=False, parent_to_target=True):
@@ -52,12 +55,54 @@ def create_bounding_box(offset=0, apply_offset=False, parent_to_target=True):
         cube.matrix_parent_inverse = obj.matrix_world.inverted()
 
 
+def create_convex_hull(obj=None):
+    """Create a convex hull from the active object and return it."""
+    obj = obj or bpy.context.active_object
+    me = obj.data
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    obj_copy = obj.copy()
+
+    me = bpy.data.meshes.new("%s convexhull" % me.name)
+    ch = bmesh.ops.convex_hull(bm, input=bm.verts)
+    bmesh.ops.delete(
+            bm,
+            geom=ch["geom_unused"] + ch["geom_interior"],
+            context='VERTS',
+            )
+    bm.to_mesh(me)
+    obj_copy.name = "%s (convex hull)" % obj.name
+    obj_copy.data = me
+
+    bpy.context.scene.collection.objects.link(obj_copy)
+    bm.free()  # not sure if this is needed
+
+    return obj_copy
+
+
+def _create_convex_hull(offset=0, apply_offset=False, parent_to_target=True):#
+
+    obj_original = bpy.context.active_object
+    obj = create_convex_hull()
+    
+
 class CreateBoundingBoxOperator(bpy.types.Operator):
     bl_idname = "collision.create_bounding_box"
     bl_label = "Create Bounding Box"
 
     def execute(self, context):
         create_bounding_box(offset=context.preferences.addons[__name__].preferences.offset, 
+                            apply_offset=context.preferences.addons[__name__].preferences.apply_offset, 
+                            parent_to_target=context.preferences.addons[__name__].preferences.parent_to_target
+                            )
+        return {'FINISHED'}
+    
+class CreateConvexHullOperator(bpy.types.Operator):
+    bl_idname = "collision.create_convex_hull"
+    bl_label = "Create Convex Hull"
+
+    def execute(self, context):
+        _create_convex_hull(offset=context.preferences.addons[__name__].preferences.offset, 
                             apply_offset=context.preferences.addons[__name__].preferences.apply_offset, 
                             parent_to_target=context.preferences.addons[__name__].preferences.parent_to_target
                             )
@@ -115,20 +160,22 @@ class CollisionCreatorPanel(bpy.types.Panel):
         row.prop(context.preferences.addons[__name__].preferences, "tri_count_limit")
 
         row = layout.row()
-        row.operator("collision.create_bounding_box", text="Box", icon="MESH_CUBE")
-        row.operator("mesh.primitive_circle_add", text="Convex", icon="MESH_CIRCLE")
+        row.operator(CreateBoundingBoxOperator.bl_idname, text="Box", icon="MESH_CUBE")
+        row.operator(CreateConvexHullOperator.bl_idname, text="Convex", icon="MESH_CIRCLE")
 
 
 def register():
     bpy.utils.register_class(MyAddonPreferences)
     bpy.utils.register_class(CollisionCreatorPanel)
     bpy.utils.register_class(CreateBoundingBoxOperator)
+    bpy.utils.register_class(CreateConvexHullOperator)
 
 
 def unregister():
     bpy.utils.unregister_class(MyAddonPreferences)
     bpy.utils.unregister_class(CollisionCreatorPanel)
     bpy.utils.unregister_class(CreateBoundingBoxOperator)
+    bpy.utils.unregister_class(CreateConvexHullOperator)
 
 
 # if __name__ == "__main__":
