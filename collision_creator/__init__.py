@@ -91,13 +91,12 @@ def create_convex_hull(obj=None):
 
     # set obj_copy as active object
     bpy.context.view_layer.objects.active = obj_copy
-
     return obj_copy
 
 
 def add_thickness(obj=None, offset=0, apply_offset=True, apply_modifier=True) -> bpy.types.Object:
     """Add thickness to the object using the solidify modifier."""
-
+    
     obj = obj or bpy.context.active_object
 
     if not apply_offset:
@@ -125,7 +124,33 @@ def add_thickness(obj=None, offset=0, apply_offset=True, apply_modifier=True) ->
     return obj
 
 
-def _create_convex_hull(offset=0, apply_offset=False, parent_to_target=True):#
+def limit_tris(obj=None, tri_count=100, apply_modifier=True):
+    """Add a decimate modifier to the object to reduce the triangle count."""
+
+    obj = obj or bpy.context.active_object
+
+    # Check if the object is valid
+    if not obj:
+        print(f"Object '{obj}' is not valid, cannot add decimate modifier")
+        return obj
+    
+    # Calculate the ratio based on the desired triangle count
+    tri_count_original = len(obj.data.polygons)
+    ratio = (tri_count_original - tri_count) / tri_count_original
+
+    # Add the decimate modifier
+    mod = obj.modifiers.new(name="Decimate", type="DECIMATE")
+    mod.ratio = ratio
+
+    if apply_modifier:
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+
+    # set active
+    bpy.context.view_layer.objects.active = obj
+    return obj
+
+
+def _create_convex_hull(offset=0, apply_offset=False, parent_to_target=True, tri_count=100):
     """
     Create a convex hull from the active object.
     apply_offset: Apply an offset to the selected object
@@ -137,11 +162,16 @@ def _create_convex_hull(offset=0, apply_offset=False, parent_to_target=True):#
     obj_original = bpy.context.active_object
     create_convex_hull()
     add_thickness( offset=offset, apply_offset=apply_offset)
+    limit_tris(tri_count=tri_count)  # tri count target is not reliable
 
-    # # parent to target, without moving
-    # if parent_to_target:
-    #     obj.parent = obj_original
-    #     obj.matrix_parent_inverse = obj_original.matrix_world.inverted()
+    # we assume all previous operations have set the active object to the new object
+    obj_new = bpy.context.active_object  
+
+    # parent to target, without moving
+    if parent_to_target:
+        obj_new.parent = obj_original
+        obj_new.matrix_parent_inverse = obj_original.matrix_world.inverted()
+
 
 
 class CreateBoundingBoxOperator(bpy.types.Operator):
@@ -164,7 +194,8 @@ class CreateConvexHullOperator(bpy.types.Operator):
     def execute(self, context):
         _create_convex_hull(offset=context.preferences.addons[__name__].preferences.offset, 
                             apply_offset=context.preferences.addons[__name__].preferences.apply_offset, 
-                            parent_to_target=context.preferences.addons[__name__].preferences.parent_to_target
+                            parent_to_target=context.preferences.addons[__name__].preferences.parent_to_target,
+                            tri_count=context.preferences.addons[__name__].preferences.tri_count_limit,
                             )
         return {'FINISHED'}
     
