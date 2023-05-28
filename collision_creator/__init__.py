@@ -34,6 +34,47 @@ def copy_object(obj: bpy.types.Object = None, set_active=False) -> bpy.types.Obj
     return new_obj
 
 
+def apply_triangulate_modifier(obj=None, apply_modifier=True):
+    obj = obj or bpy.context.active_object
+
+    # Check if the object is valid
+    if not obj:
+        print(f"Object '{obj}' is not valid, cannot apply triangulate modifier")
+        return obj
+
+    # Add the triangulate modifier
+    mod = obj.modifiers.new(name="Triangulate", type="TRIANGULATE")
+
+    if apply_modifier:
+        # Apply the modifier
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+
+    return obj
+
+
+def apply_remesh():
+
+    obj = bpy.context.active_object
+
+    if not obj:
+        print("No object selected, cannot apply remesh")
+        return
+    
+    # Add the remesh modifier
+    mod = obj.modifiers.new(name="Remesh", type="REMESH")
+    # mod.octree_depth = octree_depth
+    # mod.scale = scale
+    # mod.threshold = threshold
+    # mod.mode = mode
+
+    # Apply the modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+    # set active
+    bpy.context.view_layer.objects.active = obj
+    return obj
+
+
 def create_bounding_box(offset=0, apply_offset=False, parent_to_target=True):
     """Create a bounding box from the active object."""
     # Get the active object
@@ -77,6 +118,8 @@ def create_bounding_box(offset=0, apply_offset=False, parent_to_target=True):
     if parent_to_target:
         cube.parent = obj
         cube.matrix_parent_inverse = obj.matrix_world.inverted()
+
+    cube.name = f"UCX_{obj.name}"
 
 
 def create_convex_hull(obj=None):
@@ -149,14 +192,18 @@ def limit_tris(obj=None, tri_count=100, apply_modifier=True):
     if not obj:
         print(f"Object '{obj}' is not valid, cannot add decimate modifier")
         return obj
-    
+
     # Calculate the ratio based on the desired triangle count
     tri_count_original = len(obj.data.polygons)
-    ratio = (tri_count_original - tri_count) / tri_count_original
+    ratio = tri_count / tri_count_original
+    print(f"Original triangle count: {tri_count_original}")
+    print(f"Desired triangle count: {tri_count}")
+    print(f"Decimate ratio: {ratio}")
 
     # Add the decimate modifier
     mod = obj.modifiers.new(name="Decimate", type="DECIMATE")
     mod.ratio = ratio
+    mod.use_collapse_triangulate = True
 
     if apply_modifier:
         bpy.ops.object.modifier_apply(modifier=mod.name)
@@ -178,9 +225,12 @@ def _create_convex_hull(offset=0, apply_offset=False, parent_to_target=True, tri
     obj_original = bpy.context.active_object
     new_obj = copy_object(obj_original, set_active=True)
     new_obj.name = f"UCX_{obj_original.name}"
-    create_convex_hull()
     add_thickness( offset=offset, apply_offset=apply_offset)
-    limit_tris(tri_count=tri_count)  # tri count target is not reliable
+    create_convex_hull()
+    
+    new_obj = apply_remesh()  # convex hull doens't triangulate properly, so we remesh it
+    new_obj = apply_triangulate_modifier(obj=new_obj)
+    limit_tris(obj=new_obj, tri_count=tri_count)  # tri count target is not reliable
 
     # we assume all previous operations have set the active object to the new object
     obj_new = bpy.context.active_object  
