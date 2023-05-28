@@ -18,5 +18,24 @@ Select a mesh, tweak settings, and click the box or convex button.
 
 Created colliders have name UCX_originalname
 
+### Installation
+
+### plugget installation
+- install the [plugget addon](https://github.com/hannesdelbeke/plugget-blender-addon)
+- search for `collision-creator` and click install
+- you should now see the N-Panel in your 3d View 
+ 
+### manual installation
+- find the green button from in the top right, and click on the white arrow to open a dropdown menu
+- click `download ZIP`
+- unzip the folder somewhere on your pc.
+- copy the `collision_creator` folder to your addons folder, e.g. on Windows `C:\Users\user\AppData\Roaming\Blender Foundation\Blender\3.2\scripts\addons`
+- open blender
+- in the menu in the top left of the window, click on `Edit/Preferences...` to open the preferences window
+- Click on the `add-ons` tabs on the left
+- Search for the collision-creator addon and enable it
+- you should now see the N-Panel in your 3d View 
+
+
 ### Community
 blender artists [thread](https://blenderartists.org/t/free-add-on-easy-collision-creator-for-unreal-ucx-meshes/1466536)
