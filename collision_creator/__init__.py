@@ -21,8 +21,15 @@ def create_bounding_box(offset=0, apply_offset=False, parent_to_target=True):
     # Get the active object
     obj = bpy.context.active_object
 
+    if not obj:
+        print("No object selected, cannot create bounding box")
+        return
+    
     if not apply_offset:
         offset = 0
+    
+    # Push an undo step
+    bpy.ops.ed.undo_push(message="Create bounding box collision mesh")
 
     # Get the bounding box of the object
     bbox = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
@@ -57,32 +64,85 @@ def create_bounding_box(offset=0, apply_offset=False, parent_to_target=True):
 def create_convex_hull(obj=None):
     """Create a convex hull from the active object and return it."""
     obj = obj or bpy.context.active_object
-    me = obj.data
-    bm = bmesh.new()
-    bm.from_mesh(me)
+
+    if not obj:
+        print("No object selected, cannot create convex hull")
+        return
+    
+    orig_mesh = obj.data
+    
+    new_bmesh = bmesh.new()
+    new_bmesh.from_mesh(orig_mesh)
     obj_copy = obj.copy()
 
-    me = bpy.data.meshes.new("%s convexhull" % me.name)
-    ch = bmesh.ops.convex_hull(bm, input=bm.verts)
+    new_mesh = bpy.data.meshes.new(f"UCX_{orig_mesh.name}")
+    conv_hull = bmesh.ops.convex_hull(new_bmesh, input=new_bmesh.verts)
     bmesh.ops.delete(
-            bm,
-            geom=ch["geom_unused"] + ch["geom_interior"],
+            new_bmesh,
+            geom=conv_hull.get("geom_unused", []) + conv_hull.get("geom_interior", []),
             context='VERTS',
             )
-    bm.to_mesh(me)
-    obj_copy.name = "%s (convex hull)" % obj.name
-    obj_copy.data = me
+    new_bmesh.to_mesh(new_mesh)
+    obj_copy.name = f"UCX_{obj.name}"
+    obj_copy.data = new_mesh
 
     bpy.context.scene.collection.objects.link(obj_copy)
-    bm.free()  # not sure if this is needed
+    new_bmesh.free()  # not sure if this is needed
+
+    # set obj_copy as active object
+    bpy.context.view_layer.objects.active = obj_copy
 
     return obj_copy
 
 
+def add_thickness(obj=None, offset=0, apply_offset=True, apply_modifier=True) -> bpy.types.Object:
+    """Add thickness to the object using the solidify modifier."""
+
+    obj = obj or bpy.context.active_object
+
+    if not apply_offset:
+        return obj
+    
+    if not obj:
+        print(f"Object '{obj}' is not valid, cannot add thickness")
+        return obj
+
+    # Add the solidify modifier
+    mod = obj.modifiers.new(name="Solidify", type="SOLIDIFY")
+    mod.thickness = offset
+    mod.use_even_offset = False
+    mod.offset = 0
+    # mod.use_quality_normals = True
+    mod.use_rim = False
+    
+    mod_name = mod.name
+    mod = None  # free the reference to the modifier so it can be applied without access violation crash
+    if apply_modifier:
+        bpy.ops.object.modifier_apply(modifier=mod_name)
+
+    # set active
+    bpy.context.view_layer.objects.active = obj
+    return obj
+
+
 def _create_convex_hull(offset=0, apply_offset=False, parent_to_target=True):#
+    """
+    Create a convex hull from the active object.
+    apply_offset: Apply an offset to the selected object
+    """
+    
+    # Push an undo step
+    bpy.ops.ed.undo_push(message="Create convex hull collision mesh")
+
     obj_original = bpy.context.active_object
-    obj = create_convex_hull()
- 
+    create_convex_hull()
+    add_thickness( offset=offset, apply_offset=apply_offset)
+
+    # # parent to target, without moving
+    # if parent_to_target:
+    #     obj.parent = obj_original
+    #     obj.matrix_parent_inverse = obj_original.matrix_world.inverted()
+
 
 class CreateBoundingBoxOperator(bpy.types.Operator):
     """Create a bounding box around the selected object"""
