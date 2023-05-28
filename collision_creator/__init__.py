@@ -3,8 +3,8 @@ bl_info = {
     "author": "Hannes",
     "version": (1, 0, 0),
     "blender": (2, 93, 0),
-    "location": "N-Panel",
-    "description": "create quick simple collision meshes",
+    "location": "3D View N-Panel 'Collisions'",
+    "description": "Create quick & simple collision meshes",
     "warning": "",
     "doc_url": "",
     "category": "Modeling",
@@ -13,12 +13,11 @@ bl_info = {
 
 import bpy
 import bmesh
-from math import radians
-from mathutils import Vector, Matrix
-
+from mathutils import Vector
 
 
 def create_bounding_box(offset=0, apply_offset=False, parent_to_target=True):
+    """Create a bounding box from the active object."""
     # Get the active object
     obj = bpy.context.active_object
 
@@ -81,12 +80,12 @@ def create_convex_hull(obj=None):
 
 
 def _create_convex_hull(offset=0, apply_offset=False, parent_to_target=True):#
-
     obj_original = bpy.context.active_object
     obj = create_convex_hull()
-    
+ 
 
 class CreateBoundingBoxOperator(bpy.types.Operator):
+    """Create a bounding box around the selected object"""
     bl_idname = "collision.create_bounding_box"
     bl_label = "Create Bounding Box"
 
@@ -98,6 +97,7 @@ class CreateBoundingBoxOperator(bpy.types.Operator):
         return {'FINISHED'}
     
 class CreateConvexHullOperator(bpy.types.Operator):
+    """Create a convex hull around the selected object"""
     bl_idname = "collision.create_convex_hull"
     bl_label = "Create Convex Hull"
 
@@ -139,6 +139,7 @@ class MyAddonPreferences(bpy.types.AddonPreferences):
 
 
 class CollisionCreatorPanel(bpy.types.Panel):
+    """draw a N-Panel in the 3D View to control the collision creator addon"""
     bl_idname = "MYADDON_PT_panel"
     bl_label = bl_info["name"]
     bl_space_type = "VIEW_3D"
@@ -178,5 +179,5 @@ def unregister():
     bpy.utils.unregister_class(CreateConvexHullOperator)
 
 
-# if __name__ == "__main__":
-#     register()
+if __name__ == "__main__":
+    register()
