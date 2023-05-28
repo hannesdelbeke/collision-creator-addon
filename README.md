@@ -17,3 +17,6 @@ Select a mesh, tweak settings, and click the box or convex button.
 - convex: create a convex mesh collider
 
 Created colliders have name UCX_originalname
+
+### Community
+blender artists [thread](https://blenderartists.org/t/free-add-on-easy-collision-creator-for-unreal-ucx-meshes/1466536)
