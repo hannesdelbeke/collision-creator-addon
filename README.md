@@ -12,7 +12,6 @@ Select a mesh, tweak settings, and click the box or convex button.
 - offset: the amount of offset
 - parent to target: parent the collider under the source mesh
 - tri count limit: only used for convex, limits tri count of the collider
-
 - box: create a bounding box collider
 - convex: create a convex mesh collider
 
