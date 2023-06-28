@@ -1,7 +1,7 @@
 # UCX Collision creator addon
 Quickly create basic UCX collision meshes in Blender.
 
-Select a mesh, tweak settings, and click the box or convex button. (don't us `ctrl-Z` afterwards, it crashes Blender)
+Select a mesh, tweak settings, and click the `Box` or `Convex` button. (don't us `ctrl-Z` afterwards, it crashes Blender)
 
 |bounding box | convex mesh| n panel|
 |--|--|--|
