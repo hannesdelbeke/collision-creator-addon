@@ -5,7 +5,7 @@ Select a mesh, tweak settings, and click the `Box` or `Convex` button. (don't us
 This generates a new collision mesh in the same position, named `UCX_originalmeshname`
 |bounding box | convex mesh| n panel|
 |--|--|--|
-| ![](docs/bound-box-sample.jpg) | ![](docs/convex-mesh-sample.jpg)  | ![](docs/n-panel-preview.jpg)  |
+| ![](bound-box-sample.jpg) | ![](convex-mesh-sample.jpg)  | ![](n-panel-preview.jpg)  |
 
 ### Features
 - apply offset: enable extra offset on collider
