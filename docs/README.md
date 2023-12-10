@@ -38,4 +38,5 @@ Created colliders have name UCX_originalname
 
 ### Community
 - blender artists [thread](https://blenderartists.org/t/free-add-on-easy-collision-creator-for-unreal-ucx-meshes/1466536)
+- a similar, more advanced Blender addon: Unreal collider tool https://github.com/CydoniaValley/ue_collider_tool
 - if this tool is helpful, you can ⭐ star it on the [github page](https://github.com/hannesdelbeke/collision-creator-addon) by clicking the `⭐ star` button in the top right of this page. 🙏
